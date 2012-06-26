@@ -8,14 +8,14 @@
   <style type="text/css" media="screen">
     body { font-size: 2em; font-family: 'Inconsolata', sans-serif; }
     .red { color: red; }
-    
+
     /* disable selections / cut copy paste actions (make sure you want this) */
     -webkit-user-select: none;
 
     /* disable callout, image save panel on long press */
     -webkit-touch-callout: none;
 
-     /* "turn off" link highlight, good for custom pressed states */  
+    /* "turn off" link highlight, good for custom pressed states */  
     -webkit-tap-highlight-color: transparent;
   </style>
   <script src="http://ajax.googleapis.com/ajax/libs/jquery/1.4/jquery.min.js"></script>
@@ -24,154 +24,172 @@
   <script src="jquery.mousewheel.min.js"></script>
   <script type="text/javascript" charset="utf-8">
     $(document).ready(function() {
-      FRET_NUMBERS = [0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,0]
-      
-      if(typeof document.body.ontouchstart == "undefined") {
-        //We're using an old fasioned mouse
-        $('#clear_tab').click(function() {
-          $('.tab_line span').each(function(i, note) { $(note).text('-'); });
-        });
-        
-        $('#output_xml').click(function() {
+        FRET_NUMBERS = [0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,0]
+
+        function getVexTab() {
           var vex_tab_out = '';
           vex_tab_out += "tabstave\n"
-		  vex_tab_out += "notes ";
+          vex_tab_out += "notes ";
           var $temp_tab_bar = $('#tab_bar');
           var BEATS_THIS_BAR = 8;
           var notes_this_beat = [];
           for(beat=0; beat < BEATS_THIS_BAR; beat++) {
-			notes_this_beat[(beat)] = [];
-            for(string=0; string < 6; string++ ) {
-              var $current_string = $temp_tab_bar.find('.tab_line').eq(string);
-              var current_string_name = $current_string.attr('rel').replace('_string', '');
-              $current_string.children('span').eq(beat).each(function(i, note) {
-                var fret = $(note).text();
-                if(fret !== '-') {
-                  notes_this_beat[(beat)].push(fret+'/'+current_string_name);
-                }
-              });
+          notes_this_beat[(beat)] = [];
+          for(string=0; string < 6; string++ ) {
+          var $current_string = $temp_tab_bar.find('.tab_line').eq(string);
+          var current_string_name = $current_string.attr('rel').replace('_string', '');
+          $current_string.children('span').eq(beat).each(function(i, note) {
+            var fret = $(note).text();
+            if(fret !== '-') {
+            notes_this_beat[(beat)].push(fret+'/'+current_string_name);
             }
-			console.log(notes_this_beat[(beat)]);
-			if(notes_this_beat[(beat)].length === 1) {
-        		vex_tab_out += " " + notes_this_beat[(beat)][0] + " ";
-			} else if(notes_this_beat[(beat)].length > 1) {
-        		vex_tab_out += " (" + notes_this_beat[(beat)].join('.') + ") ";				
-			} else {
-				vex_tab_out += " ";
-			}
+            });
           }
-        vex_tab_out += "\n"; 
-		$('.vex-tabdiv .editor').val(vex_tab_out).trigger("keyup");
+          //console.log(notes_this_beat[(beat)]);
+          if(notes_this_beat[(beat)].length === 1) {
+            vex_tab_out += " " + notes_this_beat[(beat)][0] + " ";
+          } else if(notes_this_beat[(beat)].length > 1) {
+            vex_tab_out += " (" + notes_this_beat[(beat)].join('.') + ") ";				
+          } else {
+            vex_tab_out += " ";
+          }
+          }
+          vex_tab_out += "\n"; 
+
+          return vex_tab_out;
+        }
+
+        if(typeof document.body.ontouchstart == "undefined") {
+        //We're using an old fasioned mouse
+        $('#clear_tab').click(function() {
+          $('.tab_line span').each(function(i, note) { $(note).text('-'); });
+          });
+
+        $('#output_xml').click(function() {
+          $('.vex-tabdiv .editor').val(getVexTab()).trigger("keyup");
         });
-        
-        
-        
+
+        $('#append_bar').click(function() {
+          $('.vex-tabdiv .editor').val($('.vex-tabdiv .editor').val() + getVexTab()).trigger("keyup");
+        });
+
+        $('#use_notation').toggle(function() {
+            $('.vex-tabdiv .editor').val($('.vex-tabdiv .editor').val().replace(/tabstave/g, 'tabstave notation=true')).trigger("keyup");
+          }, function() {
+            $('.vex-tabdiv .editor').val($('.vex-tabdiv .editor').val().replace(/tabstave notation=true/g, 'tabstave')).trigger("keyup");
+        });
+
         $('.tab_line span').each(function(i, note) {
-          $(note).hover(function(e) {
+            $(note).hover(function(e) {
               $(this).addClass('red').bind('mousewheel', function(event, delta) {
                 var dir = delta > 0 ? 'Up' : 'Down',
-                    vel = Math.abs(delta),
-                    cur_fret = ($(this).text() == '-' ? '-' : parseInt($(this).text()));
-                  
+                vel = Math.abs(delta),
+                cur_fret = ($(this).text() == '-' ? '-' : parseInt($(this).text()));
+
                 if(cur_fret === '-' && dir === 'Up' ) {
-                  $(this).text(0);
-                  return;
+                $(this).text(0);
+                return;
                 } 
-                            
+
                 if(dir === 'Up') {
-                  var next_fret = FRET_NUMBERS[cur_fret + 1];
-                  (next_fret === undefined ? $(this).text('-') : $(this).text(next_fret) );
+                var next_fret = FRET_NUMBERS[cur_fret + 1];
+                (next_fret === undefined ? $(this).text('-') : $(this).text(next_fret) );
                 } else {
-                  var next_fret = FRET_NUMBERS[cur_fret - 1];
-                  (next_fret === undefined ? $(this).text('-') : $(this).text(next_fret) );
+                var next_fret = FRET_NUMBERS[cur_fret - 1];
+                (next_fret === undefined ? $(this).text('-') : $(this).text(next_fret) );
                 }
 
+                });
+              },
+              function(e) {
+                $(this).removeClass('red').unbind('mousewheel');            
               });
-            },
-            function(e) {
-              $(this).removeClass('red').unbind('mousewheel');            
-            });
         });
-    } else {
-      //We're on a mobile browser
-      
-    }
+        } else {
+          //We're on a mobile browser
+
+        }
     });
-  </script>
+</script>
 </head>
 <body>
   <section id="tab_bar">
-    <a href="#" id="clear_tab">clear all</a>
-    <div class="tab_line" rel="1_string">
-      <span>-</span>
-      <span>-</span>
-      <span>-</span>
-      <span>-</span>
-      <span>-</span>
-      <span>-</span>
-      <span>-</span>
-      <span>-</span>
-    </div>
-  
-    <div class="tab_line" rel="2_string">
-      <span>-</span>
-      <span>-</span>
-      <span>-</span>
-      <span>-</span>
-      <span>-</span>
-      <span>-</span>
-      <span>-</span>
-      <span>-</span>
-    </div>
-  
-    <div class="tab_line" rel="3_string">
-      <span>-</span>
-      <span>-</span>
-      <span>-</span>
-      <span>-</span>
-      <span>-</span>
-      <span>-</span>
-      <span>-</span>
-      <span>-</span>
-    </div>
-  
-    <div class="tab_line" rel="4_string">
-      <span>-</span>
-      <span>-</span>
-      <span>-</span>
-      <span>-</span>
-      <span>-</span>
-      <span>-</span>
-      <span>-</span>
-      <span>-</span>
-    </div>
-  
-    <div class="tab_line" rel="5_string">
-      <span>-</span>
-      <span>-</span>
-      <span>-</span>
-      <span>-</span>
-      <span>-</span>
-      <span>-</span>
-      <span>-</span>
-      <span>-</span>
-    </div>
-  
-    <div class="tab_line" rel="6_string">
-      <span>-</span>
-      <span>-</span>
-      <span>-</span>
-      <span>-</span>
-      <span>-</span>
-      <span>-</span>
-      <span>-</span>
-      <span>-</span>
-    </div>
+  <a href="#" id="clear_tab">clear all</a>
+  <div class="tab_line" rel="1_string">
+    <span>-</span>
+    <span>-</span>
+    <span>-</span>
+    <span>-</span>
+    <span>-</span>
+    <span>-</span>
+    <span>-</span>
+    <span>-</span>
+  </div>
+
+  <div class="tab_line" rel="2_string">
+    <span>-</span>
+    <span>-</span>
+    <span>-</span>
+    <span>-</span>
+    <span>-</span>
+    <span>-</span>
+    <span>-</span>
+    <span>-</span>
+  </div>
+
+  <div class="tab_line" rel="3_string">
+    <span>-</span>
+    <span>-</span>
+    <span>-</span>
+    <span>-</span>
+    <span>-</span>
+    <span>-</span>
+    <span>-</span>
+    <span>-</span>
+  </div>
+
+  <div class="tab_line" rel="4_string">
+    <span>-</span>
+    <span>-</span>
+    <span>-</span>
+    <span>-</span>
+    <span>-</span>
+    <span>-</span>
+    <span>-</span>
+    <span>-</span>
+  </div>
+
+  <div class="tab_line" rel="5_string">
+    <span>-</span>
+    <span>-</span>
+    <span>-</span>
+    <span>-</span>
+    <span>-</span>
+    <span>-</span>
+    <span>-</span>
+    <span>-</span>
+  </div>
+
+  <div class="tab_line" rel="6_string">
+    <span>-</span>
+    <span>-</span>
+    <span>-</span>
+    <span>-</span>
+    <span>-</span>
+    <span>-</span>
+    <span>-</span>
+    <span>-</span>
+  </div>
   </section>
-  
+
   <a href="#" id="output_xml">output music xml</a>
-  
+  <a href="#" id="append_bar">append bar</a>
+  <p>
+  	<label for="use_notation">Use notation?</label>
+    <input type="checkbox" name="use_notation" id="use_notation" />
+  </p>
+
   <div id="vex_tab" class="vex-tabdiv" width=510 scale=1.0 editor="true" editor_width=530 editor_height=230>
-    
+
   </div>
 </body>
